@@ -1,0 +1,97 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+enum GoalType {
+  lose
+  maintain
+  gain
+}
+
+enum GenderType {
+  male
+  female
+  other
+}
+
+enum MealType {
+  breakfast
+  lunch
+  dinner
+  snacks
+}
+
+enum FoodSource {
+  default
+  api
+  custom
+}
+
+model User {
+  id            String       @id @default(cuid())
+  email         String       @unique
+  password      String
+  weight        Float        @default(70)
+  height        Float        @default(170)
+  age           Int          @default(30)
+  gender        GenderType   @default(other)
+  goal          GoalType     @default(maintain)
+  calorieTarget Int          @default(2000)
+  entries       DiaryEntry[]
+  foods         Food[]
+  weightLogs    WeightLog[]
+  createdAt     DateTime     @default(now())
+  updatedAt     DateTime     @updatedAt
+}
+
+model Food {
+  id          String       @id @default(cuid())
+  externalId  String?      @unique
+  name        String
+  calories    Float
+  protein     Float
+  carbs       Float
+  fat         Float
+  fiber       Float?
+  servingSize String       @default("100 g")
+  source      FoodSource   @default(default)
+  userId      String?
+  user        User?        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  entries     DiaryEntry[]
+  createdAt   DateTime     @default(now())
+
+  @@index([name])
+  @@index([source])
+  @@index([userId])
+}
+
+model DiaryEntry {
+  id        String    @id @default(cuid())
+  userId    String
+  foodId    String
+  date      DateTime
+  mealType  MealType
+  quantity  Float     @default(1)
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  food      Food      @relation(fields: [foodId], references: [id], onDelete: Cascade)
+  createdAt DateTime  @default(now())
+
+  @@index([userId, date])
+  @@index([foodId])
+}
+
+model WeightLog {
+  id        String   @id @default(cuid())
+  userId    String
+  weight    Float
+  date      DateTime
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+
+  @@index([userId, date])
+}
