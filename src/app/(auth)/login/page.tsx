@@ -41,7 +41,6 @@ export default async function LoginPage({
           Register
         </Link>
       </p>
-      <p className="mt-2 text-xs text-slate-500">Demo: demo@nutrack.app / password123</p>
     </main>
   );
 }

@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { GoalType, GenderType } from "@prisma/client";
 import { z } from "zod";
-import { prisma } from "@/lib/prisma";
+import { prisma } from "@/lib/db";
 import { calculateCalorieTarget } from "@/lib/calculations";
 import { requireApiUser } from "@/lib/apiAuth";
 

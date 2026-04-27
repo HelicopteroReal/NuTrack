@@ -6,7 +6,12 @@ import { prisma } from "@/lib/prisma";
 
 const SESSION_COOKIE = "nutrack_session";
 const EXPIRES_IN_SECONDS = 60 * 60 * 24 * 14;
-const secret = new TextEncoder().encode(process.env.JWT_SECRET || "dev-secret-change-me");
+
+if (!process.env.JWT_SECRET) {
+  throw new Error("JWT_SECRET environment variable is not set");
+}
+
+const secret = new TextEncoder().encode(process.env.JWT_SECRET);
 
 type SessionPayload = {
   userId: string;

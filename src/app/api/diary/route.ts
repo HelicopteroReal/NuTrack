@@ -1,16 +1,9 @@
 import { NextResponse } from "next/server";
 import { MealType } from "@prisma/client";
-import { z } from "zod";
 import { getDateRange } from "@/lib/date";
 import { requireApiUser } from "@/lib/apiAuth";
 import { prisma } from "@/lib/db";
-
-const createSchema = z.object({
-  foodId: z.string().min(1),
-  mealType: z.enum(["breakfast", "lunch", "dinner", "snacks"]),
-  quantity: z.number().positive(),
-  date: z.string().optional(),
-});
+import { addDiarySchema } from "@/lib/validation";
 
 export async function GET(req: Request) {
   const auth = await requireApiUser();
@@ -50,7 +43,7 @@ export async function POST(req: Request) {
   if (auth.response || !auth.user) return auth.response;
 
   const body = await req.json();
-  const parsed = createSchema.safeParse(body);
+  const parsed = addDiarySchema.safeParse(body);
   if (!parsed.success) {
     return NextResponse.json({ error: "Invalid payload" }, { status: 400 });
   }

@@ -1,12 +1,14 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { BottomSheetModal } from "@/components/BottomSheetModal";
+import { FoodDTO } from "@/lib/types";
 
 type CustomFoodModalProps = {
   open: boolean;
   onClose: () => void;
   onCreated: () => Promise<void>;
+  editingFood?: FoodDTO | null;
 };
 
 const INITIAL = {
@@ -19,10 +21,29 @@ const INITIAL = {
   servingSize: "100 g",
 };
 
-export function CustomFoodModal({ open, onClose, onCreated }: CustomFoodModalProps) {
+export function CustomFoodModal({ open, onClose, onCreated, editingFood }: CustomFoodModalProps) {
   const [form, setForm] = useState(INITIAL);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+
+  const isEditing = !!editingFood;
+
+  useEffect(() => {
+    if (editingFood) {
+      setForm({
+        name: editingFood.name,
+        calories: String(editingFood.calories),
+        protein: String(editingFood.protein),
+        carbs: String(editingFood.carbs),
+        fat: String(editingFood.fat),
+        fiber: String(editingFood.fiber || ""),
+        servingSize: editingFood.servingSize || "100 g",
+      });
+    } else {
+      setForm(INITIAL);
+    }
+    setError("");
+  }, [editingFood, open]);
 
   const update = (key: keyof typeof INITIAL, value: string) => {
     setForm((prev) => ({ ...prev, [key]: value }));
@@ -32,8 +53,11 @@ export function CustomFoodModal({ open, onClose, onCreated }: CustomFoodModalPro
     setError("");
     setLoading(true);
 
-    const res = await fetch("/api/foods/create", {
-      method: "POST",
+    const url = isEditing ? `/api/foods/${editingFood.id}` : "/api/foods/create";
+    const method = isEditing ? "PATCH" : "POST";
+
+    const res = await fetch(url, {
+      method,
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         name: form.name,
@@ -50,7 +74,7 @@ export function CustomFoodModal({ open, onClose, onCreated }: CustomFoodModalPro
 
     if (!res.ok) {
       const body = await res.json().catch(() => ({}));
-      setError(body.error || "Could not create food.");
+      setError(body.error || (isEditing ? "Could not update food." : "Could not create food."));
       return;
     }
 
@@ -60,7 +84,7 @@ export function CustomFoodModal({ open, onClose, onCreated }: CustomFoodModalPro
   };
 
   return (
-    <BottomSheetModal open={open} onClose={onClose} title="Create custom food">
+    <BottomSheetModal open={open} onClose={onClose} title={isEditing ? "Edit food" : "Create custom food"}>
       <div className="space-y-3">
         <input
           value={form.name}
@@ -115,7 +139,7 @@ export function CustomFoodModal({ open, onClose, onCreated }: CustomFoodModalPro
           disabled={loading}
           className="min-h-12 w-full rounded-2xl bg-emerald-500 px-4 py-2 text-white transition-all duration-200 hover:scale-[1.02] active:scale-[0.98] disabled:opacity-60"
         >
-          {loading ? "Creating..." : "Create food"}
+          {loading ? (isEditing ? "Updating..." : "Creating...") : isEditing ? "Update food" : "Create food"}
         </button>
       </div>
     </BottomSheetModal>

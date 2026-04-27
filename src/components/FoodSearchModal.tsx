@@ -27,6 +27,7 @@ export function FoodSearchModal({ open, mealType, onClose, onAdded }: FoodSearch
   const [error, setError] = useState("");
   const [selectedFood, setSelectedFood] = useState<FoodDTO | null>(null);
   const [customFoodOpen, setCustomFoodOpen] = useState(false);
+  const [editingFood, setEditingFood] = useState<FoodDTO | null>(null);
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
@@ -73,6 +74,15 @@ export function FoodSearchModal({ open, mealType, onClose, onAdded }: FoodSearch
     onClose();
   };
 
+  const handleDeleteCustomFood = async (foodId: string) => {
+    if (!confirm("Delete this food?")) return;
+    const res = await fetch(`/api/foods/${foodId}`, { method: "DELETE" });
+    if (res.ok) {
+      setReloadKey((prev) => prev + 1);
+      await onAdded();
+    }
+  };
+
   if (!open) return null;
 
   return (
@@ -98,7 +108,10 @@ export function FoodSearchModal({ open, mealType, onClose, onAdded }: FoodSearch
 
           <button
             type="button"
-            onClick={() => setCustomFoodOpen(true)}
+            onClick={() => {
+              setEditingFood(null);
+              setCustomFoodOpen(true);
+            }}
             className="min-h-12 w-full rounded-2xl border border-white/20 bg-white/70 px-4 py-2 text-sm font-medium text-gray-800 transition-all duration-200 hover:scale-[1.02] active:scale-[0.98] dark:border-white/10 dark:bg-gray-900/70 dark:text-gray-100"
           >
             Create custom food
@@ -106,16 +119,44 @@ export function FoodSearchModal({ open, mealType, onClose, onAdded }: FoodSearch
 
           <div className="max-h-[55vh] space-y-2 overflow-y-auto pr-1">
             {foods.map((food) => (
-              <button
+              <div
                 key={food.id}
-                onClick={() => setSelectedFood(food)}
-                className="w-full rounded-2xl border border-white/20 bg-white/60 p-4 text-left shadow-sm transition-all duration-200 hover:scale-[1.02] active:scale-[0.98] dark:border-white/10 dark:bg-gray-900/60"
+                className="group flex items-center gap-2 rounded-2xl border border-white/20 bg-white/60 p-4 shadow-sm dark:border-white/10 dark:bg-gray-900/60"
               >
-                <p className="font-medium text-gray-900 dark:text-gray-100">{food.name} <span className="text-xs text-gray-500">({food.source || "default"})</span></p>
-                <p className="text-sm text-gray-600 dark:text-gray-300">
-                  {Math.round(food.calories)} kcal · P {Math.round(food.protein)}g · C {Math.round(food.carbs)}g · F {Math.round(food.fat)}g · {food.servingSize || "100 g"}
-                </p>
-              </button>
+                <button
+                  onClick={() => setSelectedFood(food)}
+                  className="flex-1 text-left transition-all duration-200 hover:scale-[1.02] active:scale-[0.98]"
+                >
+                  <p className="font-medium text-gray-900 dark:text-gray-100">
+                    {food.name} <span className="text-xs text-gray-500">({food.source || "default"})</span>
+                  </p>
+                  <p className="text-sm text-gray-600 dark:text-gray-300">
+                    {Math.round(food.calories)} kcal · P {Math.round(food.protein)}g · C {Math.round(food.carbs)}g · F {Math.round(food.fat)}g · {food.servingSize || "100 g"}
+                  </p>
+                </button>
+
+                {food.source === "custom" && (
+                  <div className="flex gap-1">
+                    <button
+                      onClick={() => {
+                        setEditingFood(food);
+                        setCustomFoodOpen(true);
+                      }}
+                      className="rounded-lg px-2 py-1 text-sm text-emerald-600 dark:text-emerald-400 hover:bg-white/50 dark:hover:bg-gray-700/50"
+                      title="Edit food"
+                    >
+                      ✎
+                    </button>
+                    <button
+                      onClick={() => handleDeleteCustomFood(food.id)}
+                      className="rounded-lg px-2 py-1 text-sm text-rose-600 dark:text-rose-400 hover:bg-white/50 dark:hover:bg-gray-700/50"
+                      title="Delete food"
+                    >
+                      ✕
+                    </button>
+                  </div>
+                )}
+              </div>
             ))}
             {loading && <p className="text-sm text-gray-500 dark:text-gray-400">Loading foods...</p>}
             {error && <p className="text-sm text-rose-500">{error}</p>}
@@ -134,7 +175,7 @@ export function FoodSearchModal({ open, mealType, onClose, onAdded }: FoodSearch
       </BottomSheetModal>
 
       <AddFoodModal
-        open={Boolean(selectedFood)}
+        open={Boolean(selectedFood) && !editingFood}
         food={selectedFood}
         onClose={() => setSelectedFood(null)}
         onConfirm={confirmAdd}
@@ -142,7 +183,11 @@ export function FoodSearchModal({ open, mealType, onClose, onAdded }: FoodSearch
 
       <CustomFoodModal
         open={customFoodOpen}
-        onClose={() => setCustomFoodOpen(false)}
+        editingFood={editingFood}
+        onClose={() => {
+          setCustomFoodOpen(false);
+          setEditingFood(null);
+        }}
         onCreated={async () => {
           setPage(1);
           setReloadKey((prev) => prev + 1);

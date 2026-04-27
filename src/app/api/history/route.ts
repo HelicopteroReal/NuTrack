@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { format, startOfDay, subDays } from "date-fns";
-import { prisma } from "@/lib/prisma";
+import { prisma } from "@/lib/db";
 import { requireApiUser } from "@/lib/apiAuth";
 
 export async function GET() {

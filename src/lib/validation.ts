@@ -1,11 +1,23 @@
 import { z } from "zod";
 
+const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[a-zA-Z\d@$!%*?&]{8,128}$/;
+
 export const registerSchema = z.object({
   email: z.email().transform((value) => value.trim().toLowerCase()),
-  password: z.string().min(8).max(128),
+  password: z
+    .string()
+    .min(8, "Password must be at least 8 characters")
+    .max(128, "Password must be at most 128 characters")
+    .regex(
+      passwordRegex,
+      "Password must contain uppercase, lowercase, number, and special character (@$!%*?&)"
+    ),
 });
 
-export const loginSchema = registerSchema;
+export const loginSchema = z.object({
+  email: z.email().transform((value) => value.trim().toLowerCase()),
+  password: z.string().min(1, "Password is required"),
+});
 
 export const mealTypeSchema = z.enum(["breakfast", "lunch", "dinner", "snacks"]);
 

@@ -2,15 +2,10 @@
 
 import { GenderType, GoalType } from "@prisma/client";
 import { redirect } from "next/navigation";
-import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import { calculateCalorieTarget } from "@/lib/calculations";
 import { comparePassword, createSessionToken, hashPassword, setSessionCookie } from "@/lib/auth";
-
-const registerSchema = z.object({
-  email: z.email(),
-  password: z.string().min(8),
-});
+import { registerSchema, loginSchema } from "@/lib/validation";
 
 export async function registerAction(formData: FormData) {
   const parsed = registerSchema.safeParse({
@@ -50,15 +45,21 @@ export async function registerAction(formData: FormData) {
 }
 
 export async function loginAction(formData: FormData) {
-  const email = String(formData.get("email") || "").trim().toLowerCase();
-  const password = String(formData.get("password") || "");
+  const parsed = loginSchema.safeParse({
+    email: formData.get("email"),
+    password: formData.get("password"),
+  });
 
-  const user = await prisma.user.findUnique({ where: { email } });
+  if (!parsed.success) {
+    redirect("/login?error=Invalid%20credentials");
+  }
+
+  const user = await prisma.user.findUnique({ where: { email: parsed.data.email } });
   if (!user) {
     redirect("/login?error=Invalid%20credentials");
   }
 
-  const valid = await comparePassword(password, user.password);
+  const valid = await comparePassword(parsed.data.password, user.password);
   if (!valid) {
     redirect("/login?error=Invalid%20credentials");
   }
