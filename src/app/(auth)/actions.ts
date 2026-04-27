@@ -53,18 +53,26 @@ export async function loginAction(formData: FormData) {
   const email = String(formData.get("email") || "").trim().toLowerCase();
   const password = String(formData.get("password") || "");
 
+  console.log("[v0] loginAction called with email:", email);
+
   const user = await prisma.user.findUnique({ where: { email } });
   if (!user) {
+    console.log("[v0] loginAction: user not found");
     redirect("/login?error=Invalid%20credentials");
   }
 
   const valid = await comparePassword(password, user.password);
   if (!valid) {
+    console.log("[v0] loginAction: invalid password");
     redirect("/login?error=Invalid%20credentials");
   }
 
+  console.log("[v0] loginAction: user authenticated, creating token");
   const token = await createSessionToken({ userId: user.id, email: user.email });
+  
+  console.log("[v0] loginAction: setting session cookie");
   await setSessionCookie(token);
 
+  console.log("[v0] loginAction: redirecting to dashboard");
   redirect("/dashboard");
 }

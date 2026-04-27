@@ -50,6 +50,7 @@ export async function verifySessionToken(token: string) {
 }
 
 export async function setSessionCookie(token: string) {
+  console.log("[v0] setSessionCookie: setting cookie with token length:", token.length);
   const cookieStore = await cookies();
   cookieStore.set(SESSION_COOKIE, token, {
     httpOnly: true,
@@ -58,6 +59,7 @@ export async function setSessionCookie(token: string) {
     maxAge: EXPIRES_IN_SECONDS,
     path: "/",
   });
+  console.log("[v0] setSessionCookie: cookie set complete");
 }
 
 export async function clearSessionCookie() {
@@ -68,8 +70,11 @@ export async function clearSessionCookie() {
 export async function getSession() {
   const cookieStore = await cookies();
   const token = cookieStore.get(SESSION_COOKIE)?.value;
+  console.log("[v0] getSession: token", token ? "present" : "missing");
   if (!token) return null;
-  return verifySessionToken(token);
+  const session = await verifySessionToken(token);
+  console.log("[v0] getSession: session valid:", !!session);
+  return session;
 }
 
 export async function getCurrentUser() {
