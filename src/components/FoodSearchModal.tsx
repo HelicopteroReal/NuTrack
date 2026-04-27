@@ -2,11 +2,15 @@
 
 import { useEffect, useState } from "react";
 import { useDebounce } from "@/hooks/useDebounce";
+import { useFoodAPI, type OpenFoodFactsProduct } from "@/hooks/useFoodAPI";
 import { FoodDTO, MealType } from "@/lib/types";
 import { AddFoodModal } from "@/components/AddFoodModal";
 import { BottomSheetModal } from "@/components/BottomSheetModal";
 import { CustomFoodModal } from "@/components/CustomFoodModal";
+import { BarcodeScanner } from "@/components/BarcodeScanner";
+import { ScanResultModal } from "@/components/ScanResultModal";
 import { SegmentedControl } from "@/components/SegmentedControl";
+import { Scan } from "lucide-react";
 
 type FoodSearchModalProps = {
   open: boolean;
@@ -29,6 +33,12 @@ export function FoodSearchModal({ open, mealType, onClose, onAdded }: FoodSearch
   const [customFoodOpen, setCustomFoodOpen] = useState(false);
   const [editingFood, setEditingFood] = useState<FoodDTO | null>(null);
   const [saving, setSaving] = useState(false);
+
+  // Scanner states
+  const [scannerOpen, setScannerOpen] = useState(false);
+  const [scannedProduct, setScannedProduct] = useState<OpenFoodFactsProduct | null>(null);
+  const [scannedBarcode, setScannedBarcode] = useState<string | null>(null);
+  const { searchByBarcode, loading: searchingProduct } = useFoodAPI();
 
   useEffect(() => {
     if (!open) return;
@@ -83,6 +93,37 @@ export function FoodSearchModal({ open, mealType, onClose, onAdded }: FoodSearch
     }
   };
 
+  const handleScan = async (barcode: string) => {
+    setScannedBarcode(barcode);
+    const product = await searchByBarcode(barcode);
+    setScannedProduct(product);
+  };
+
+  const handleScanConfirm = async (product: OpenFoodFactsProduct) => {
+    // Create or update food in our database
+    const res = await fetch("/api/foods/create", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        name: product.name,
+        calories: product.calories || 0,
+        protein: product.protein || 0,
+        carbs: product.carbs || 0,
+        fat: product.fat || 0,
+        fiber: product.fiber || null,
+        servingSize: product.servingSize || "100 g",
+      }),
+    });
+
+    if (res.ok) {
+      const createdFood = await res.json();
+      setSelectedFood(createdFood.food);
+      setScannerOpen(false);
+      setScannedProduct(null);
+      setScannedBarcode(null);
+    }
+  };
+
   if (!open) return null;
 
   return (
@@ -115,6 +156,15 @@ export function FoodSearchModal({ open, mealType, onClose, onAdded }: FoodSearch
             className="min-h-12 w-full rounded-2xl border border-white/20 bg-white/70 px-4 py-2 text-sm font-medium text-gray-800 transition-all duration-200 hover:scale-[1.02] active:scale-[0.98] dark:border-white/10 dark:bg-gray-900/70 dark:text-gray-100"
           >
             Create custom food
+          </button>
+
+          <button
+            type="button"
+            onClick={() => setScannerOpen(true)}
+            className="min-h-12 w-full flex items-center justify-center gap-2 rounded-2xl bg-emerald-500 px-4 py-2 text-sm font-medium text-white transition-all duration-200 hover:scale-[1.02] active:scale-[0.98] hover:bg-emerald-600"
+          >
+            <Scan className="w-4 h-4" />
+            Scan barcode
           </button>
 
           <div className="max-h-[55vh] space-y-2 overflow-y-auto pr-1">
@@ -193,6 +243,28 @@ export function FoodSearchModal({ open, mealType, onClose, onAdded }: FoodSearch
           setReloadKey((prev) => prev + 1);
           await onAdded();
         }}
+      />
+
+      <BarcodeScanner
+        open={scannerOpen}
+        onClose={() => {
+          setScannerOpen(false);
+          setScannedProduct(null);
+          setScannedBarcode(null);
+        }}
+        onScan={handleScan}
+      />
+
+      <ScanResultModal
+        open={scannerOpen && !!scannedBarcode}
+        onClose={() => {
+          setScannerOpen(false);
+          setScannedProduct(null);
+          setScannedBarcode(null);
+        }}
+        product={scannedProduct}
+        loading={searchingProduct}
+        onConfirm={handleScanConfirm}
       />
 
       {saving && (
