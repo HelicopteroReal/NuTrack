@@ -4,7 +4,9 @@ import { useEffect, useMemo, useState } from "react";
 import { GoalType, GenderType } from "@prisma/client";
 import { calculateCalorieTarget } from "@/lib/calculations";
 import { GlassCard } from "@/components/GlassCard";
+import { ProfileSkeleton } from "@/components/LoadingSkeleton";
 import { SegmentedControl } from "@/components/SegmentedControl";
+import { useToast } from "@/components/Toast";
 
 type ProfilePayload = {
   weight: number;
@@ -17,17 +19,27 @@ type ProfilePayload = {
 
 export default function ProfilePage() {
   const [profile, setProfile] = useState<ProfilePayload | null>(null);
-  const [message, setMessage] = useState("");
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const { success, error: showError } = useToast();
 
   useEffect(() => {
     const load = async () => {
-      const res = await fetch("/api/profile", { cache: "no-store" });
-      if (res.ok) {
-        setProfile(await res.json());
+      try {
+        const res = await fetch("/api/profile", { cache: "no-store" });
+        if (res.ok) {
+          setProfile(await res.json());
+        } else {
+          showError("Failed to load profile");
+        }
+      } catch {
+        showError("Network error while loading profile");
+      } finally {
+        setLoading(false);
       }
     };
     load();
-  }, []);
+  }, [showError]);
 
   const autoTarget = useMemo(() => {
     if (!profile) return 0;
@@ -36,18 +48,29 @@ export default function ProfilePage() {
 
   const onSave = async () => {
     if (!profile) return;
-    const res = await fetch("/api/profile", {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ ...profile, calorieTarget: autoTarget }),
-    });
-    if (res.ok) {
-      setMessage("Profile saved.");
-      setProfile(await res.json());
+    setSaving(true);
+    try {
+      const res = await fetch("/api/profile", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ ...profile, calorieTarget: autoTarget }),
+      });
+      if (res.ok) {
+        success("Profile saved successfully");
+        setProfile(await res.json());
+      } else {
+        const data = await res.json().catch(() => ({}));
+        showError(data.error || "Failed to save profile");
+      }
+    } catch {
+      showError("Network error while saving profile");
+    } finally {
+      setSaving(false);
     }
   };
 
-  if (!profile) return <p className="text-sm text-gray-600 dark:text-gray-300">Loading profile...</p>;
+  if (loading) return <ProfileSkeleton />;
+  if (!profile) return <p className="text-sm text-gray-600 dark:text-gray-300">Failed to load profile.</p>;
 
   return (
     <GlassCard className="space-y-4 p-5" interactive>
@@ -117,11 +140,11 @@ export default function ProfilePage() {
 
       <button
         onClick={onSave}
-        className="min-h-12 rounded-2xl bg-emerald-500 px-5 py-3 text-sm font-medium text-white shadow-sm transition-all duration-200 hover:scale-[1.02] active:scale-[0.98]"
+        disabled={saving}
+        className="min-h-12 rounded-2xl bg-emerald-500 px-5 py-3 text-sm font-medium text-white shadow-sm transition-all duration-200 hover:scale-[1.02] active:scale-[0.98] disabled:opacity-60"
       >
-        Save preferences
+        {saving ? "Saving..." : "Save preferences"}
       </button>
-      {message && <p className="text-sm text-emerald-600 dark:text-emerald-300">{message}</p>}
     </GlassCard>
   );
 }

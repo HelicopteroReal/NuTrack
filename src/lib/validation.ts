@@ -36,3 +36,25 @@ export const addDiarySchema = z.object({
 export const diaryDateQuerySchema = z.object({
   date: z.string().optional(),
 });
+
+export const updateCustomFoodSchema = createCustomFoodSchema.partial();
+
+export const profileUpdateSchema = z.object({
+  weight: z.number().positive().max(500),
+  height: z.number().positive().max(300),
+  age: z.number().int().positive().max(150),
+  gender: z.enum(["male", "female", "other"]),
+  goal: z.enum(["lose", "maintain", "gain"]),
+  calorieTarget: z.number().int().positive().max(10000).optional(),
+});
+
+export const weightLogSchema = z.object({
+  weight: z.number().positive().max(500),
+  date: z.string().optional(),
+});
+
+export const historyQuerySchema = z.object({
+  startDate: z.string().optional(),
+  endDate: z.string().optional(),
+  limit: z.coerce.number().int().min(1).max(90).default(14),
+});

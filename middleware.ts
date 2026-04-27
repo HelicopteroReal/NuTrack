@@ -1,9 +1,9 @@
 import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
 
-const protectedRoutes = ["/dashboard", "/diary", "/history", "/profile"];
+const protectedRoutes = ["/dashboard", "/diary", "/history", "/profile", "/weight"];
 const authRoutes = ["/login", "/register"];
-const protectedApiRoutes = ["/api/foods", "/api/diary", "/api/profile", "/api/history"];
+const protectedApiRoutes = ["/api/foods", "/api/diary", "/api/profile", "/api/history", "/api/weight"];
 
 export function middleware(request: NextRequest) {
   const token = request.cookies.get("nutrack_session")?.value;
@@ -35,11 +35,13 @@ export const config = {
     "/diary/:path*",
     "/history/:path*",
     "/profile/:path*",
+    "/weight/:path*",
     "/login",
     "/register",
     "/api/foods/:path*",
     "/api/diary/:path*",
     "/api/profile/:path*",
     "/api/history/:path*",
+    "/api/weight/:path*",
   ],
 };

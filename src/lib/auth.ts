@@ -6,7 +6,18 @@ import { prisma } from "@/lib/prisma";
 
 const SESSION_COOKIE = "nutrack_session";
 const EXPIRES_IN_SECONDS = 60 * 60 * 24 * 14;
-const secret = new TextEncoder().encode(process.env.JWT_SECRET || "dev-secret-change-me");
+
+function getJwtSecret(): Uint8Array {
+  const jwtSecret = process.env.JWT_SECRET;
+  
+  if (process.env.NODE_ENV === "production" && !jwtSecret) {
+    throw new Error("JWT_SECRET environment variable is required in production");
+  }
+  
+  return new TextEncoder().encode(jwtSecret || "dev-secret-change-me");
+}
+
+const secret = getJwtSecret();
 
 type SessionPayload = {
   userId: string;

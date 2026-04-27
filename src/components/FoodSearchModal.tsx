@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { Pencil, Trash2 } from "lucide-react";
 import { useDebounce } from "@/hooks/useDebounce";
 import { FoodDTO, MealType } from "@/lib/types";
 import { AddFoodModal } from "@/components/AddFoodModal";
@@ -27,7 +28,9 @@ export function FoodSearchModal({ open, mealType, onClose, onAdded }: FoodSearch
   const [error, setError] = useState("");
   const [selectedFood, setSelectedFood] = useState<FoodDTO | null>(null);
   const [customFoodOpen, setCustomFoodOpen] = useState(false);
+  const [editingFood, setEditingFood] = useState<FoodDTO | null>(null);
   const [saving, setSaving] = useState(false);
+  const [deleting, setDeleting] = useState<string | null>(null);
 
   useEffect(() => {
     if (!open) return;
@@ -73,6 +76,24 @@ export function FoodSearchModal({ open, mealType, onClose, onAdded }: FoodSearch
     onClose();
   };
 
+  const handleDelete = async (food: FoodDTO, e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (!confirm(`Delete "${food.name}"? This cannot be undone.`)) return;
+    
+    setDeleting(food.id);
+    const res = await fetch(`/api/foods/${food.id}`, { method: "DELETE" });
+    setDeleting(null);
+    
+    if (res.ok) {
+      setFoods((prev) => prev.filter((f) => f.id !== food.id));
+    }
+  };
+
+  const handleEdit = (food: FoodDTO, e: React.MouseEvent) => {
+    e.stopPropagation();
+    setEditingFood(food);
+  };
+
   if (!open) return null;
 
   return (
@@ -106,16 +127,39 @@ export function FoodSearchModal({ open, mealType, onClose, onAdded }: FoodSearch
 
           <div className="max-h-[55vh] space-y-2 overflow-y-auto pr-1">
             {foods.map((food) => (
-              <button
+              <div
                 key={food.id}
-                onClick={() => setSelectedFood(food)}
-                className="w-full rounded-2xl border border-white/20 bg-white/60 p-4 text-left shadow-sm transition-all duration-200 hover:scale-[1.02] active:scale-[0.98] dark:border-white/10 dark:bg-gray-900/60"
+                className="relative flex items-center gap-2 rounded-2xl border border-white/20 bg-white/60 shadow-sm transition-all duration-200 dark:border-white/10 dark:bg-gray-900/60"
               >
-                <p className="font-medium text-gray-900 dark:text-gray-100">{food.name} <span className="text-xs text-gray-500">({food.source || "default"})</span></p>
-                <p className="text-sm text-gray-600 dark:text-gray-300">
-                  {Math.round(food.calories)} kcal · P {Math.round(food.protein)}g · C {Math.round(food.carbs)}g · F {Math.round(food.fat)}g · {food.servingSize || "100 g"}
-                </p>
-              </button>
+                <button
+                  onClick={() => setSelectedFood(food)}
+                  className="flex-1 p-4 text-left transition-all duration-200 hover:scale-[1.01] active:scale-[0.99]"
+                >
+                  <p className="font-medium text-gray-900 dark:text-gray-100">{food.name} <span className="text-xs text-gray-500">({food.source || "default"})</span></p>
+                  <p className="text-sm text-gray-600 dark:text-gray-300">
+                    {Math.round(food.calories)} kcal · P {Math.round(food.protein)}g · C {Math.round(food.carbs)}g · F {Math.round(food.fat)}g · {food.servingSize || "100 g"}
+                  </p>
+                </button>
+                {food.source === "custom" && (
+                  <div className="flex gap-1 pr-3">
+                    <button
+                      onClick={(e) => handleEdit(food, e)}
+                      className="rounded-xl p-2 text-gray-400 transition-colors hover:bg-emerald-100 hover:text-emerald-600 dark:hover:bg-emerald-900/30"
+                      aria-label="Edit food"
+                    >
+                      <Pencil size={16} />
+                    </button>
+                    <button
+                      onClick={(e) => handleDelete(food, e)}
+                      disabled={deleting === food.id}
+                      className="rounded-xl p-2 text-gray-400 transition-colors hover:bg-rose-100 hover:text-rose-500 disabled:opacity-50 dark:hover:bg-rose-900/30"
+                      aria-label="Delete food"
+                    >
+                      <Trash2 size={16} />
+                    </button>
+                  </div>
+                )}
+              </div>
             ))}
             {loading && <p className="text-sm text-gray-500 dark:text-gray-400">Loading foods...</p>}
             {error && <p className="text-sm text-rose-500">{error}</p>}
@@ -147,6 +191,16 @@ export function FoodSearchModal({ open, mealType, onClose, onAdded }: FoodSearch
           setPage(1);
           setReloadKey((prev) => prev + 1);
           await onAdded();
+        }}
+      />
+
+      <CustomFoodModal
+        open={Boolean(editingFood)}
+        onClose={() => setEditingFood(null)}
+        editFood={editingFood}
+        onCreated={async () => {
+          setReloadKey((prev) => prev + 1);
+          setEditingFood(null);
         }}
       />
 

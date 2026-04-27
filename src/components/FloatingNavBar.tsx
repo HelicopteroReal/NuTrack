@@ -3,11 +3,12 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import clsx from "clsx";
-import { ChartColumn, LayoutDashboard, ScrollText, UserRound } from "lucide-react";
+import { ChartColumn, LayoutDashboard, Scale, ScrollText, UserRound } from "lucide-react";
 
 const links = [
   { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
   { href: "/diary", label: "Diary", icon: ScrollText },
+  { href: "/weight", label: "Weight", icon: Scale },
   { href: "/history", label: "History", icon: ChartColumn },
   { href: "/profile", label: "Profile", icon: UserRound },
 ];

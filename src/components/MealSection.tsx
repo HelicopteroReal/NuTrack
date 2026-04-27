@@ -38,7 +38,13 @@ export function MealSection({ mealType, entries, onAddFood, onQuantityChange, on
       </div>
 
       {entries.length === 0 ? (
-        <p className="rounded-2xl border border-dashed border-white/25 bg-white/50 p-3 text-sm text-gray-500 dark:border-white/10 dark:bg-gray-900/40 dark:text-gray-400">No foods logged yet.</p>
+        <button
+          onClick={() => onAddFood(mealType)}
+          className="w-full rounded-2xl border border-dashed border-emerald-300/50 bg-emerald-50/50 p-4 text-center transition-all duration-200 hover:border-emerald-400 hover:bg-emerald-50 dark:border-emerald-700/30 dark:bg-emerald-900/10 dark:hover:border-emerald-600 dark:hover:bg-emerald-900/20"
+        >
+          <p className="text-sm font-medium text-emerald-600 dark:text-emerald-400">Add your first {mealType} item</p>
+          <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">Tap to search and add food</p>
+        </button>
       ) : (
         <div className="space-y-2">
           {entries.map((entry) => (

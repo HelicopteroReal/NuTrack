@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { DailyCalorieChart, MacroBreakdownChart, WeightTrendChart } from "@/components/Charts";
+import { CardSkeleton, ChartSkeleton } from "@/components/LoadingSkeleton";
 
 type HistoryResponse = {
   dailyCalories: Array<{ date: string; calories: number }>;
@@ -24,7 +25,19 @@ export default function HistoryPage() {
   }, []);
 
   if (!data) {
-    return <p className="text-sm text-slate-600">Loading history...</p>;
+    return (
+      <div className="space-y-4">
+        <section className="grid gap-4 sm:grid-cols-2">
+          <CardSkeleton />
+          <CardSkeleton />
+        </section>
+        <ChartSkeleton />
+        <div className="grid gap-4 lg:grid-cols-2">
+          <ChartSkeleton />
+          <ChartSkeleton />
+        </div>
+      </div>
+    );
   }
 
   return (

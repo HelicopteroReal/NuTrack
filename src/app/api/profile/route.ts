@@ -1,18 +1,9 @@
 import { NextResponse } from "next/server";
 import { GoalType, GenderType } from "@prisma/client";
-import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import { calculateCalorieTarget } from "@/lib/calculations";
 import { requireApiUser } from "@/lib/apiAuth";
-
-const schema = z.object({
-  weight: z.number().positive(),
-  height: z.number().positive(),
-  age: z.number().int().positive(),
-  gender: z.enum(["male", "female", "other"]),
-  goal: z.enum(["lose", "maintain", "gain"]),
-  calorieTarget: z.number().int().positive().optional(),
-});
+import { profileUpdateSchema } from "@/lib/validation";
 
 export async function GET() {
   const auth = await requireApiUser();
@@ -27,7 +18,7 @@ export async function PATCH(req: Request) {
   if (auth.response || !auth.user) return auth.response;
 
   const body = await req.json();
-  const parsed = schema.safeParse(body);
+  const parsed = profileUpdateSchema.safeParse(body);
   if (!parsed.success) {
     return NextResponse.json({ error: "Invalid payload" }, { status: 400 });
   }
