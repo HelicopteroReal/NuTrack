@@ -32,55 +32,19 @@ export function useFoodAPI() {
         throw new Error("Invalid barcode format");
       }
 
-      // Try OpenFoodFacts API
-      const response = await fetch(
-        `https://world.openfoodfacts.org/api/v0/product/${cleanBarcode}.json`,
-        {
-          headers: {
-            "User-Agent": "NuTrack-App/1.0 (https://nutrack.app)",
-          },
-        }
-      );
+      // Use backend proxy to avoid CORS issues
+      const response = await fetch(`/api/foods/barcode?barcode=${encodeURIComponent(cleanBarcode)}`);
 
       if (!response.ok) {
         throw new Error("Product not found");
       }
 
       const data = await response.json();
-
-      if (!data.product) {
-        throw new Error("Product not found in database");
-      }
-
-      const product = data.product;
-      const nutrients = product.nutriments || {};
-
-      // Extract nutrition info (per 100g unless specified)
-      const servingSize = product.serving_size || "100 g";
-      const perServing = product.serving_size ? true : false;
-
-      let multiplier = 1;
-      if (!perServing && servingSize && servingSize.includes("100")) {
-        multiplier = 1;
-      }
-
-      return {
-        id: `off-${cleanBarcode}`,
-        name: product.product_name || product.generic_name || "Unknown Product",
-        calories: Math.round((nutrients["energy-kcal"] || nutrients["energy_value"] || 0) * multiplier),
-        protein: Math.round((nutrients.proteins || 0) * multiplier * 10) / 10,
-        carbs: Math.round((nutrients.carbohydrates || 0) * multiplier * 10) / 10,
-        fat: Math.round((nutrients.fat || 0) * multiplier * 10) / 10,
-        fiber: nutrients.fiber ? Math.round(nutrients.fiber * multiplier * 10) / 10 : undefined,
-        servingSize: servingSize || "100 g",
-        imageUrl: product.image_front_url || undefined,
-        barcode: cleanBarcode,
-        source: "api",
-      };
+      return data;
     } catch (err) {
       const errorMsg = err instanceof Error ? err.message : "Failed to search for product";
       setError(errorMsg);
-      console.error("OpenFoodFacts API error:", err);
+      console.error("Barcode lookup error:", err);
       return null;
     } finally {
       setLoading(false);
