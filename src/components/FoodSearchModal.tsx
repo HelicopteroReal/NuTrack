@@ -43,7 +43,7 @@ export function FoodSearchModal({ open, mealType, onClose, onAdded }: FoodSearch
   useEffect(() => {
     if (!open) return;
     const search = async () => {
-      const searchQuery = debounced || "chicken";
+      const searchQuery = debounced || (source === "custom" ? "" : "chicken");
       const q = new URLSearchParams({
         q: searchQuery,
         source,

@@ -46,7 +46,7 @@ export async function GET(req: NextRequest) {
   const localFoods = await prisma.food.findMany({
     where: {
       AND: [
-        { name: { contains: q } },
+        q ? { name: { contains: q } } : {},
         {
           OR: [
             { source: "default" },
