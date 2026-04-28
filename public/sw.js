@@ -68,13 +68,20 @@ self.addEventListener('fetch', (event) => {
   }
 
   // API routes - network first, fallback to cache
+  // NEVER cache search/barcode endpoints (they have dynamic data)
+  if (url.pathname.includes('/api/foods/search') || url.pathname.includes('/api/foods/barcode')) {
+    event.respondWith(fetch(request).catch(() => new Response(JSON.stringify({ error: 'Offline' }), { status: 503 })));
+    return;
+  }
+
   if (url.pathname.includes('/api/')) {
     event.respondWith(
       fetch(request)
         .then((response) => {
+          if (!response.ok) return response;
           const clone = response.clone();
           caches.open(API_CACHE).then((cache) => {
-            cache.put(request, clone);
+            cache.put(request, clone).catch(() => {});
           });
           return response;
         })
