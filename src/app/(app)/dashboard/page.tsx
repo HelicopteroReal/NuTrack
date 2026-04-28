@@ -1,8 +1,6 @@
 import Link from "next/link";
 import { CalorieCard } from "@/components/CalorieCard";
-import { GlassCard } from "@/components/GlassCard";
-import { MacroProgress } from "@/components/MacroProgress";
-import { macroPercentages } from "@/lib/calculations";
+import { MacroRatioChart } from "@/components/MacroRatioChart";
 import { getDateRange } from "@/lib/date";
 import { prisma } from "@/lib/db";
 import { requireUser } from "@/lib/auth";
@@ -29,16 +27,19 @@ export default async function DashboardPage() {
   );
 
   const remaining = user.calorieTarget - totals.calories;
-  const percentages = macroPercentages(totals);
 
   return (
     <div className="space-y-4 md:space-y-5">
       <section className="grid gap-4 md:grid-cols-2">
         <CalorieCard consumed={totals.calories} remaining={remaining} target={user.calorieTarget} />
-        <MacroProgress protein={percentages.protein} carbs={percentages.carbs} fat={percentages.fat} />
+        <MacroRatioChart
+          protein={totals.protein}
+          carbs={totals.carbs}
+          fat={totals.fat}
+        />
       </section>
 
-      <GlassCard className="p-5" interactive>
+      <div className="rounded-2xl border border-white/20 bg-white/55 p-5 shadow-sm backdrop-blur-xl dark:border-white/10 dark:bg-gray-900/55">
         <div className="mb-4 flex items-center justify-between">
           <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100">Today&apos;s meals</h2>
           <Link
@@ -65,7 +66,7 @@ export default async function DashboardPage() {
             ))}
           </div>
         )}
-      </GlassCard>
+      </div>
     </div>
   );
 }
