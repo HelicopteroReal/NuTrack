@@ -45,8 +45,16 @@ export async function GET(req: NextRequest) {
 
   const localFoods = await prisma.food.findMany({
     where: {
-      name: { contains: q },
-      OR: [{ source: "default" }, { source: "api" }, { source: "custom", userId: auth.user.id }],
+      AND: [
+        { name: { contains: q, mode: "insensitive" } },
+        {
+          OR: [
+            { source: "default" },
+            { source: "api" },
+            { AND: [{ source: "custom" }, { userId: auth.user.id }] },
+          ],
+        },
+      ],
     },
     take: pageSize * 2,
     orderBy: [{ source: "asc" }, { createdAt: "desc" }],
