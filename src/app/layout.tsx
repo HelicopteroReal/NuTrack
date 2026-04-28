@@ -81,7 +81,8 @@ export default function RootLayout({
       <body className="min-h-full flex flex-col overflow-x-hidden transition-colors duration-200">
         <ThemeProvider>{children}</ThemeProvider>
 
-        {/* Service Worker Registration */}
+        {/* Service Worker Registration - DISABLED due to caching issues with dynamic API calls */}
+        {/*
         <script
           dangerouslySetInnerHTML={{
             __html: `
@@ -97,6 +98,7 @@ export default function RootLayout({
             `,
           }}
         />
+        */}
       </body>
     </html>
   );

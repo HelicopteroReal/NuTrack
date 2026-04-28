@@ -41,7 +41,7 @@ export const searchFoodsQuerySchema = z.object({
 export const addDiarySchema = z.object({
   foodId: z.string().min(1),
   mealType: mealTypeSchema,
-  quantity: z.number().positive().max(50),
+  quantity: z.number().positive().max(25, "Maximum 25 per meal"),
   date: z.string().optional(),
 });
 
