@@ -22,10 +22,14 @@ export function DiaryFoodItem({ entry, onQuantityChange, onRemove }: DiaryFoodIt
         <input
           type="number"
           min="0.1"
+          max="25"
           step="0.1"
           defaultValue={entry.quantity}
           className="min-h-11 w-24 rounded-xl border border-white/20 bg-white/70 px-3 py-2 dark:border-white/10 dark:bg-gray-800/70"
-          onBlur={(e) => onQuantityChange(entry.id, Number(e.target.value))}
+          onBlur={(e) => {
+            const value = Math.min(Number(e.target.value), 25);
+            onQuantityChange(entry.id, value);
+          }}
         />
       </label>
       <button

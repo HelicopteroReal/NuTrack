@@ -4,7 +4,7 @@ import { prisma } from "@/lib/db";
 import { requireApiUser } from "@/lib/apiAuth";
 
 const updateSchema = z.object({
-  quantity: z.number().positive(),
+  quantity: z.number().positive().max(25, "Maximum 25 per meal"),
 });
 
 export async function PATCH(req: Request, { params }: { params: Promise<{ id: string }> }) {
