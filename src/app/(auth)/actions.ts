@@ -2,7 +2,7 @@
 
 import { GenderType, GoalType } from "@prisma/client";
 import { redirect } from "next/navigation";
-import { prisma } from "@/lib/prisma";
+import { prisma } from "@/lib/db";
 import { calculateCalorieTarget } from "@/lib/calculations";
 import { comparePassword, createSessionToken, hashPassword, setSessionCookie } from "@/lib/auth";
 import { registerSchema, loginSchema } from "@/lib/validation";

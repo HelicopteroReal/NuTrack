@@ -4,7 +4,7 @@ import { GlassCard } from "@/components/GlassCard";
 import { MacroProgress } from "@/components/MacroProgress";
 import { macroPercentages } from "@/lib/calculations";
 import { getDateRange } from "@/lib/date";
-import { prisma } from "@/lib/prisma";
+import { prisma } from "@/lib/db";
 import { requireUser } from "@/lib/auth";
 
 export default async function DashboardPage() {

@@ -2,7 +2,7 @@ import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { compare, hash } from "bcryptjs";
 import { SignJWT, jwtVerify } from "jose";
-import { prisma } from "@/lib/prisma";
+import { prisma } from "@/lib/db";
 
 const SESSION_COOKIE = "nutrack_session";
 const EXPIRES_IN_SECONDS = 60 * 60 * 24 * 14;
