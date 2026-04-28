@@ -43,19 +43,22 @@ export async function GET(req: NextRequest) {
 
   const { q, page, pageSize, source } = parsed.data;
 
+  let whereClause: any = {
+    OR: [
+      { source: "default" },
+      { source: "api" },
+      { AND: [{ source: "custom" }, { userId: auth.user.id }] },
+    ],
+  };
+
+  if (q) {
+    whereClause = {
+      AND: [{ name: { contains: q } }, whereClause],
+    };
+  }
+
   const localFoods = await prisma.food.findMany({
-    where: {
-      AND: [
-        q ? { name: { contains: q } } : {},
-        {
-          OR: [
-            { source: "default" },
-            { source: "api" },
-            { AND: [{ source: "custom" }, { userId: auth.user.id }] },
-          ],
-        },
-      ],
-    },
+    where: whereClause,
     take: pageSize * 2,
     orderBy: [{ source: "asc" }, { createdAt: "desc" }],
   });
